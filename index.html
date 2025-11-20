@@ -185,10 +185,10 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial; background:lin
 
 <script>
 // Demo users
-const demoUsers = { admin:{pass:'123',role:'admin',name:'Direktor'}, janez:{pass:'111',role:'worker',name:'Janez'}, miha:{pass:'222',role:'worker',name:'Miha'} };
+const demoUsers = { admin:{pass:'Outside2025',role:'admin',name:'Direktor'}, aljaž:{pass:'SnowWinter2025',role:'worker',name:'Aljaž'}};
 // Storage keys
 const KEY_WORKERS='ew_workers_v1', KEY_TASKS='ew_tasks_v1', KEY_HISTORY='ew_history_v1';
-let workers = JSON.parse(localStorage.getItem(KEY_WORKERS) || JSON.stringify({ janez:{name:'Janez',role:'worker'}, miha:{name:'Miha',role:'worker'} }));
+let workers = JSON.parse(localStorage.getItem(KEY_WORKERS) || JSON.stringify({ aljaž:{name:'Aljaž',role:'worker'}));
 let tasks = JSON.parse(localStorage.getItem(KEY_TASKS) || '[]');
 let history = JSON.parse(localStorage.getItem(KEY_HISTORY) || '[]');
 let currentUser=null, currentRole=null, currentDate=new Date(), modalAddDate=null, completingIndex=null;
@@ -199,12 +199,9 @@ function parseTimeToHours(t){ const [hh,mm]=t.split(':').map(Number); return hh 
 function diffHours(s,e){ return Math.max(0, Math.round((parseTimeToHours(e)-parseTimeToHours(s))*100)/100); }
 function humanDuration(d){ const h=Math.floor(d); const m=Math.round((d-h)*60); if(h===0) return `${m}m`; if(m===0) return `${h}h`; return `${h}h ${m}m`; }
 
-// Seed demo tasks if empty
-if(tasks.length===0){ tasks.push({ title:'Pregled omarice A1', desc:'Preveri varovalke', date:formatDate(new Date()), worker:'janez', color:'#ffc400', completed:false, intervals:[] }); tasks.push({ title:'Zamenjava stikala', desc:'Hala 3', date:formatDate(new Date()), worker:'miha', color:'#ffb84d', completed:false, intervals:[] }); saveAll(); }
-
 /* ---------------- LOGIN ---------------- */
-function fillDemo(){ document.getElementById('loginUser').value='admin'; document.getElementById('loginPass').value='123'; }
-function doLogin(){ const u=document.getElementById('loginUser').value.trim().toLowerCase(); const p=document.getElementById('loginPass').value; if(demoUsers[u] && demoUsers[u].pass===p){ currentUser=u; currentRole=demoUsers[u].role; afterLogin(); } else { alert('Napačni podatki. Demo: admin/123, janez/111, miha/222'); } }
+function fillDemo(){ document.getElementById('loginUser').value='admin'; document.getElementById('loginPass').value='Outside2025'; }
+function doLogin(){ const u=document.getElementById('loginUser').value.trim().toLowerCase(); const p=document.getElementById('loginPass').value; if(demoUsers[u] && demoUsers[u].pass===p){ currentUser=u; currentRole=demoUsers[u].role; afterLogin(); } else { alert('Napačni podatki.'); } }
 function afterLogin(){ document.getElementById('loginWrap').style.display='none'; document.getElementById('app').classList.add('active'); document.getElementById('userName').textContent = demoUsers[currentUser].name; document.getElementById('userRole').textContent = currentRole; document.getElementById('avatarBox').textContent = demoUsers[currentUser].name.slice(0,1).toUpperCase(); document.getElementById('roleChip')?.remove?.(); renderMonth(); renderCalendar(); renderTasksPanel(); renderHistoryPanel(); renderStatsPanel(); populateWorkerSelect(); // hide add for workers
  if(currentRole !== 'admin'){ document.querySelectorAll('.sidebar-btn').forEach(b=>{ if(b.id==='btnTasks') b.style.display='none'; }); }
 }
