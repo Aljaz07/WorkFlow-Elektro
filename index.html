@@ -66,17 +66,20 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial; background:lin
 <div id="loginWrap" class="login-wrap">
   <div class="login-card">
     <h2>ElektroWorks</h2>
-    <input id="loginUser" placeholder="Uporabniško ime" />
+    <input id="loginUser" placeholder="Uporabniško ime (admin/janez/miha)" />
     <input id="loginPass" type="password" placeholder="Geslo" />
     <div style="display:flex;gap:10px;margin-top:10px">
       <button class="btn" onclick="doLogin()">Prijava</button>
+      <button class="btn" style="background:transparent;color:var(--accent);border:1px solid rgba(255,196,0,0.06)" onclick="fillDemo()">Demo</button>
     </div>
+    <div class="small" style="margin-top:8px">Demo uporabniki: <strong>admin/123</strong>, <strong>janez/111</strong>, <strong>miha/222</strong></div>
+  </div>
 </div>
 
 <!-- APP -->
 <div id="app" class="app">
   <div class="left">
-    <div class="logo"><div class="dot">E</div><div><h3>ElektroWorks</h3></div></div></div>
+    <div class="logo"><div class="dot">E</div><div><h3>ElektroWorks</h3><div class="note">Upravljanje delovnih nalog</div></div></div>
 
     <div style="margin-top:16px">
       <button id="btnCal" class="sidebar-btn active" onclick="showPanel('calendar')">Koledar</button>
@@ -202,7 +205,7 @@ function humanDuration(d){ const h=Math.floor(d); const m=Math.round((d-h)*60); 
 if(tasks.length===0){ tasks.push({ title:'Pregled omarice A1', desc:'Preveri varovalke', date:formatDate(new Date()), worker:'janez', color:'#ffc400', completed:false, intervals:[] }); tasks.push({ title:'Zamenjava stikala', desc:'Hala 3', date:formatDate(new Date()), worker:'miha', color:'#ffb84d', completed:false, intervals:[] }); saveAll(); }
 
 /* ---------------- LOGIN ---------------- */
-function (){ document.getElementById('loginUser').value='admin'; document.getElementById('loginPass').value='123'; }
+function fillDemo(){ document.getElementById('loginUser').value='admin'; document.getElementById('loginPass').value='123'; }
 function doLogin(){ const u=document.getElementById('loginUser').value.trim().toLowerCase(); const p=document.getElementById('loginPass').value; if(demoUsers[u] && demoUsers[u].pass===p){ currentUser=u; currentRole=demoUsers[u].role; afterLogin(); } else { alert('Napačni podatki. Demo: admin/123, janez/111, miha/222'); } }
 function afterLogin(){ document.getElementById('loginWrap').style.display='none'; document.getElementById('app').classList.add('active'); document.getElementById('userName').textContent = demoUsers[currentUser].name; document.getElementById('userRole').textContent = currentRole; document.getElementById('avatarBox').textContent = demoUsers[currentUser].name.slice(0,1).toUpperCase(); document.getElementById('roleChip')?.remove?.(); renderMonth(); renderCalendar(); renderTasksPanel(); renderHistoryPanel(); renderStatsPanel(); populateWorkerSelect(); // hide add for workers
  if(currentRole !== 'admin'){ document.querySelectorAll('.sidebar-btn').forEach(b=>{ if(b.id==='btnTasks') b.style.display='none'; }); }
@@ -276,15 +279,14 @@ function renderStatsPanel(){ const panel=document.getElementById('statsPanel'); 
 
 /* ---------------- EXPORT ---------------- */
 function exportCSV(){ // build CSV of current month per worker or all
- const rows = [['Datum','Nalogo','Delavec','Intervali','Skupaj ur','Opis']]; tasks.forEach(t=>{ if(currentRole==='admin' || t.worker===currentUser){ const intervals = (t.intervals||[]).map(iv=>`${iv.start}-${iv.end}`).join(', '); const total = (t.intervals||[]).reduce((s,i)=>s + (i.dur||0),0); rows.push([t.date, t.title, t.worker, intervals, total, t.desc || '']); } }); const csv = rows.map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('
-'); const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download = `report_${currentDate.getFullYear()}_${currentDate.getMonth()+1}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+ const rows = [['Datum','Nalogo','Delavec','Intervali','Skupaj ur','Opis']]; tasks.forEach(t=>{ if(currentRole==='admin' || t.worker===currentUser){ const intervals = (t.intervals||[]).map(iv=>`${iv.start}-${iv.end}`).join(', '); const total = (t.intervals||[]).reduce((s,i)=>s + (i.dur||0),0); rows.push([t.date, t.title, t.worker, intervals, total, t.desc || '']); } }); const csv = rows.map(r=> r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\\n'); const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download = `report_${currentDate.getFullYear()}_${currentDate.getMonth()+1}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
 async function exportPDF(){ // use jsPDF autotable
  const { jsPDF } = window.jspdf; const doc = new jsPDF(); const cols=[{header:'Datum',dataKey:'date'},{header:'Naloga',dataKey:'title'},{header:'Delavec',dataKey:'worker'},{header:'Intervali',dataKey:'intervals'},{header:'Ure',dataKey:'hours'}]; const data = []; tasks.forEach(t=>{ if(currentRole==='admin' || t.worker===currentUser){ const intervals = (t.intervals||[]).map(iv=>`${iv.start}-${iv.end}`).join(', '); const hours = (t.intervals||[]).reduce((s,i)=>s + (i.dur||0),0); data.push({ date:t.date, title:t.title, worker:t.worker, intervals, hours: humanDuration(hours) }); } }); doc.setFontSize(14); doc.text('Mesečno poročilo — ElektroWorks',14,18); doc.autoTable({ startY:28, head: [cols.map(c=>c.header)], body: data.map(r=> [r.date, r.title, r.worker, r.intervals, r.hours]) }); doc.save(`report_${currentDate.getFullYear()}_${currentDate.getMonth()+1}.pdf`); }
 
 /* ---------------- UTIL ---------------- */
 function parseTimeToHours(t){ const [h,m]=t.split(':').map(Number); return h + m/60; }
 // expose functions
-window. = ; window.doLogin = doLogin; window.prevMonth = prevMonth; window.nextMonth = nextMonth; window.goToday = goToday; window.openAddModal = openAddModal; window.closeAddModal = closeAddModal; window.saveNewTask = saveNewTask; window.openCompleteModal = openCompleteModal; window.closeCompleteModal = closeCompleteModal; window.addTimeRow = addTimeRow; window.submitComplete = submitComplete; window.showPanel = showPanel; window.logout = logout; window.exportCSV = exportCSV; window.exportPDF = exportPDF; window.populateWorkerSelect = populateWorkerSelect; window.renderCalendar = renderCalendar; window.renderTasksPanel = renderTasksPanel; window.renderHistoryPanel = renderHistoryPanel; window.renderStatsPanel = renderStatsPanel; window.saveAll = saveAll;
+window.fillDemo = fillDemo; window.doLogin = doLogin; window.prevMonth = prevMonth; window.nextMonth = nextMonth; window.goToday = goToday; window.openAddModal = openAddModal; window.closeAddModal = closeAddModal; window.saveNewTask = saveNewTask; window.openCompleteModal = openCompleteModal; window.closeCompleteModal = closeCompleteModal; window.addTimeRow = addTimeRow; window.submitComplete = submitComplete; window.showPanel = showPanel; window.logout = logout; window.exportCSV = exportCSV; window.exportPDF = exportPDF; window.populateWorkerSelect = populateWorkerSelect; window.renderCalendar = renderCalendar; window.renderTasksPanel = renderTasksPanel; window.renderHistoryPanel = renderHistoryPanel; window.renderStatsPanel = renderStatsPanel; window.saveAll = saveAll;
 
 // initialize selects and month label
 populateWorkerSelect(); renderMonth();
